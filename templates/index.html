@@ -1,58 +1,277 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Daily Expense Tracker</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Daily Expense Tracker </title>
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-pchxda5jLzQ6PqfQh2JgRFS2GQG6q0ivIXv1PR+lTm2TXzr+fo1M5d9p8q5Yq6T0LmKdivo9egD1ypA8+2DzNQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-R8CmX+liPwX3p4fX9QoapZxZpiS5TOWLw4iMPrVQfDY6vqS8Cc9MM17IqO6w/8TC" crossorigin="anonymous">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
+<body class="text-light" style="font-family: 'Inter', sans-serif;">
 
-<h1>Daily Expense Tracker</h1>
+<nav class="navbar navbar-expand-lg navbar-dark mb-4">
+  <div class="container">
+    <a class="navbar-brand centered-brand" href="{{ url_for('index') }}">Expense Tracker</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu" aria-controls="navMenu" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav">
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('reports') }}">Reports</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('about') }}">About</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
 
-<!-- TOAST MESSAGES -->
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    {% for category, message in messages %}
-      <div class="toast {{ category }}">{{ message }}</div>
-    {% endfor %}
-  {% endif %}
-{% endwith %}
+<div class="container-fluid">
+    <!-- FLASH MESSAGES -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="toast-container position-fixed top-0 end-0 p-3" id="toastContainer">
+          {% for category, message in messages %}
+            <div class="toast align-items-center text-bg-{{ 'success' if category=='success' else 'danger' }} border-0 show" role="alert" aria-live="assertive" aria-atomic="true">
+              <div class="d-flex">
+                <div class="toast-body">
+                  {{ message }}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
 
-<div class="card">
-    <form method="POST"
-          action="{{ url_for('edit_expense', id=edit_expense.id) if edit_expense else url_for('add_expense') }}">
+    <!-- add-expense form centered -->
+    <div class="row justify-content-center mb-5">
+      <div class="col-lg-6">
+        <div class="card bg-secondary text-light shadow-lg mb-4">
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <i class="fas fa-wallet" style="font-size: 3rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                    <h5 class="card-title mt-3">{{ 'Edit Expense' if edit_expense else 'Add New Expense' }}</h5>
+                </div>
+                <form id="expenseForm" method="POST" action="{{ url_for('add_expense') }}" class="expense-form">
 
-        <input type="date" name="date" required
-               value="{{ edit_expense.date if edit_expense else '' }}">
+                  <input type="hidden" id="expenseId" name="id" value="{{ edit_expense.id if edit_expense else '' }}">
 
-        <input type="text" name="name" placeholder="Expense Name" required
-               value="{{ edit_expense.name if edit_expense else '' }}">
+                  <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                      <label for="date" class="form-label small"><i class="fas fa-calendar-alt me-2"></i>Date</label>
+                      <div class="input-with-icon">
+                        <span class="input-icon"><i class="fas fa-calendar-alt"></i></span>
+                        <input type="date" class="form-control form-control-lg" id="date" name="date" required value="{{ edit_expense.date if edit_expense else '' }}">
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <label for="category" class="form-label small"><i class="fas fa-tag me-2"></i>Category</label>
+                      <div class="input-with-icon">
+                        <span class="input-icon"><i class="fas fa-tag"></i></span>
+                        <select class="form-select form-select-lg" id="category" name="category" required>
+                          <option value="">Choose category...</option>
+                          <option value="Food" {{ 'selected' if edit_expense and edit_expense.category=='Food' else '' }}>🍔 Food</option>
+                          <option value="Transport" {{ 'selected' if edit_expense and edit_expense.category=='Transport' else '' }}>🚗 Transport</option>
+                          <option value="Shopping" {{ 'selected' if edit_expense and edit_expense.category=='Shopping' else '' }}>🛍️ Shopping</option>
+                          <option value="Utilities" {{ 'selected' if edit_expense and edit_expense.category=='Utilities' else '' }}>⚡ Utilities</option>
+                          <option value="Other" {{ 'selected' if edit_expense and edit_expense.category=='Other' else '' }}>📦 Other</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <label for="amount" class="form-label small"><i class="fas fa-rupee-sign me-2"></i>Amount</label>
+                      <div class="input-with-icon">
+                        <span class="input-icon"><i class="fas fa-rupee-sign"></i></span>
+                        <input type="number" step="0.01" class="form-control form-control-lg text-end" id="amount" name="amount" placeholder="0.00" required value="{{ edit_expense.amount if edit_expense else '' }}">
+                      </div>
+                    </div>
 
-        <input type="number" name="amount" placeholder="Amount" required
-               value="{{ edit_expense.amount if edit_expense else '' }}">
+                    <div class="col-12">
+                      <label for="name" class="form-label small"><i class="fas fa-pencil-alt me-2"></i>Description</label>
+                      <input type="text" class="form-control form-control-lg" id="name" name="name" placeholder="Enter expense description" required value="{{ edit_expense.name if edit_expense else '' }}">
+                    </div>
 
-        <button type="submit">
-            {{ 'Update Expense' if edit_expense else 'Add Expense' }}
-        </button>
-    </form>
-</div>
+                    <div class="col-12">
+                      <label for="notes" class="form-label small"><i class="fas fa-sticky-note me-2"></i>Notes</label>
+                      <textarea class="form-control" id="notes" name="notes" rows="2" placeholder="Optional details...">{{ edit_expense.notes if edit_expense else '' }}</textarea>
+                    </div>
 
-<h2>Expenses</h2>
+                    <div class="col-12 text-center">
+                      <button type="submit" id="submitBtn" class="btn btn-accent btn-lg me-2">
+                        <i class="fas fa-plus me-2"></i> {{ 'Update' if edit_expense else 'Add Expense' }}
+                      </button>
+                      <button type="button" id="cancelEdit" class="btn btn-outline-light btn-lg {{ '' if edit_expense else 'd-none' }}">
+                        <i class="fas fa-times me-2"></i> Cancel
+                      </button>
+                    </div>
+                  </div>
+                </form>
+            </div>
+        </div>
+      </div>
+    </div>
+    <!-- filters and stats below form -->
+    <div class="row mb-5">
+      <div class="col-lg-12">
+        <div class="card bg-dark text-light p-4">
+          <h5 class="mb-4"><i class="fas fa-sliders-h me-2"></i>Filters & Analytics</h5>
+          <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <label class="form-label small"><i class="fas fa-calendar me-2"></i>From Date</label>
+                <input type="date" id="filterStart" class="form-control">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small"><i class="fas fa-calendar me-2"></i>To Date</label>
+                <input type="date" id="filterEnd" class="form-control">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small"><i class="fas fa-filter me-2"></i>Category</label>
+                <select id="filterCategory" class="form-select">
+                    <option value="">All Categories</option>
+                    <option>Food</option>
+                    <option>Transport</option>
+                    <option>Shopping</option>
+                    <option>Utilities</option>
+                    <option>Other</option>
+                </select>
+            </div>
+          </div>
+          <div class="mb-4 text-end">
+            <button id="exportCsv" class="btn btn-outline-light"><i class="fa fa-file-csv me-2"></i>Export to CSV</button>
+          </div>
+          <!-- statistic cards -->
+          <div class="row g-3">
+            <div class="col-sm-6 col-lg-3">
+              <div class="stat-card">
+                <div class="stat-label"><i class="fas fa-list-ol me-2"></i>Total Expenses</div>
+                <div class="stat-value" id="statCount">0</div>
+              </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+              <div class="stat-card">
+                <div class="stat-label"><i class="fas fa-chart-line me-2"></i>Average</div>
+                <div class="stat-value" id="statAvg">₹0</div>
+              </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+              <div class="stat-card">
+                <div class="stat-label"><i class="fas fa-fire me-2"></i>Highest</div>
+                <div class="stat-value" id="statMax">₹0</div>
+              </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+              <div class="stat-card">
+                <div class="stat-label"><i class="fas fa-arrow-down me-2"></i>Lowest</div>
+                <div class="stat-value" id="statMin">₹0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-{% for e in expenses %}
-<div class="expense">
-    <div class="col date">{{ e.date }}</div>
-    <div class="col name">{{ e.name }}</div>
-    <div class="col amount">₹{{ e.amount }}</div>
-    <div class="col actions">
-        <a href="/edit/{{ e.id }}">Edit</a>
-        <a href="/delete/{{ e.id }}" class="delete">Delete</a>
+    <h2 class="mb-4"><i class="fas fa-receipt me-2"></i>Recent Expenses</h2>
+
+    <!-- empty message / table wrapper (always present) -->
+    <div id="emptyMessage" class="card text-center p-5 {% if expenses %}d-none{% endif %}">
+        <i class="fas fa-inbox" style="font-size: 4rem; opacity: 0.5;"></i>
+        <p class="text-muted mt-3 fs-5">No expense entries yet.</p>
+        <p class="text-muted small">Use the form above to log your first transaction.</p>
+    </div>
+
+    <div class="table-responsive {% if not expenses %}d-none{% endif %}">
+      <table id="expensesTable" class="table table-dark table-striped align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th><i class="fas fa-calendar me-2"></i>Date</th>
+            <th><i class="fas fa-tag me-2"></i>Category</th>
+            <th><i class="fas fa-receipt me-2"></i>Description</th>
+            <th class="text-end"><i class="fas fa-rupee-sign me-2"></i>Amount</th>
+            <th class="text-end"><i class="fas fa-cog me-2"></i>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in expenses %}
+          <tr data-id="{{ e.id }}" data-notes="{{ e.notes|e if e.notes else '' }}">
+            <td class="exp-date">{{ e.date }}</td>
+            <td class="exp-cat">
+              {% if e.category == 'Food' %}
+                <span class="category-badge badge-food">🍔 {{ e.category }}</span>
+              {% elif e.category == 'Transport' %}
+                <span class="category-badge badge-transport">🚗 {{ e.category }}</span>
+              {% elif e.category == 'Shopping' %}
+                <span class="category-badge badge-shopping">🛍️ {{ e.category }}</span>
+              {% elif e.category == 'Utilities' %}
+                <span class="category-badge badge-utilities">⚡ {{ e.category }}</span>
+              {% elif e.category %}
+                <span class="category-badge badge-other">📦 {{ e.category }}</span>
+              {% endif %}
+            </td>
+            <td class="exp-name"><strong>{{ e.name }}</strong></td>
+            <td class="exp-amount fw-bold text-end" style="color: #4facfe;">₹{{ e.amount }}</td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-outline-secondary edit-btn" title="Edit"><i class="fas fa-pen"></i></button>
+              <button class="btn btn-sm btn-outline-danger delete-btn" title="Delete"><i class="fas fa-trash"></i></button>
+              <button class="btn btn-sm btn-outline-info note-btn" title="View Notes"><i class="fas fa-sticky-note"></i></button>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not expenses %}
+          <tr>
+            <td colspan="5" class="text-center text-muted">No expenses recorded yet.</td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mt-5 mb-4">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="stat-card">
+                    <div class="stat-label"><i class="fas fa-wallet me-2"></i>Total Expenditure</div>
+                    <div class="stat-value" style="font-size: 2rem;">₹{{ total }}</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="stat-card">
+                    <div class="stat-label"><i class="fas fa-list-ol me-2"></i>Entries Count</div>
+                    <div class="stat-value" style="font-size: 2rem;">{{ expenses|length }}</div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
-{% endfor %}
 
-<div class="total">
-    <strong>Total Expense: ₹{{ total }}</strong>
+<!-- note modal -->
+<div class="modal fade" id="noteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0">
+        <h5 class="modal-title"><i class="fas fa-sticky-note me-2"></i>Notes & Details</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="modalNotesContent" style="min-height: 150px;">
+        <!-- content inserted via JS -->
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
 </div>
 
+<!-- Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-..." crossorigin="anonymous"></script>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>
