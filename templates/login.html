@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Login - Expense Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-pchxda5jLzQ6PqfQh2JgRFS2GQG6q0ivIXv1PR+lTm2TXzr+fo1M5d9p8q5Yq6T0LmKdivo9egD1ypA8+2DzNQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="text-light" style="font-family: 'Inter', sans-serif;">
+<nav class="navbar navbar-expand-lg navbar-dark mb-4">
+  <div class="container">
+    <a class="navbar-brand centered-brand" href="{{ url_for('home') }}">Expense Tracker</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu" aria-controls="navMenu" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('home') }}">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('register') }}">Sign up</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="container mb-3">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ 'success' if category=='success' else 'danger' }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<div class="container d-flex align-items-center justify-content-center" style="min-height:70vh;">
+  <div class="col-md-6 col-lg-4">
+    <div class="card">
+      <div class="card-body p-4">
+        <div class="text-center mb-4">
+          <img
+            src="https://images.pexels.com/photos/546819/pexels-photo-546819.jpeg?auto=compress&cs=tinysrgb&w=800"
+            alt="Laptop and notebook on a desk"
+            class="login-illustration mb-3"
+          />
+          <i class="fas fa-lock" style="font-size:3rem;background:var(--primary-gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;"></i>
+          <h1 class="h4 mt-3 mb-1">Sign in</h1>
+          <p class="text-muted small mb-0">Sign in to your personal expense workspace.</p>
+        </div>
+        <form method="POST" action="{{ url_for('login') }}">
+          <div class="mb-3">
+            <label class="form-label small">Email</label>
+            <input type="email" class="form-control" name="email" placeholder="you@example.com" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small">Password</label>
+            <input type="password" class="form-control" name="password" placeholder="••••••••" required>
+          </div>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="rememberMe">
+              <label class="form-check-label small" for="rememberMe">
+                Remember me
+              </label>
+            </div>
+            <a href="{{ url_for('forgot_password') }}" class="small text-decoration-none">Forgot password?</a>
+          </div>
+          <button type="submit" class="btn btn-accent w-100 mb-3">
+            <i class="fas fa-sign-in-alt me-2"></i>Sign in
+          </button>
+          <a href="{{ url_for('register') }}" class="btn btn-outline-light w-100 btn-sm">
+            <i class="fas fa-user-plus me-2"></i>Create new account
+          </a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+</body>
+</html>
+

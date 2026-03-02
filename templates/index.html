@@ -18,21 +18,26 @@
 
 <nav class="navbar navbar-expand-lg navbar-dark mb-4">
   <div class="container">
-    <a class="navbar-brand centered-brand" href="{{ url_for('index') }}">Expense Tracker</a>
+    <a class="navbar-brand centered-brand" href="{{ url_for('home') }}">Expense Tracker</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu" aria-controls="navMenu" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navMenu">
       <ul class="navbar-nav">
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('home') }}">Home</a></li>
+        <li class="nav-item"><a class="nav-link active" aria-current="page" href="{{ url_for('dashboard') }}">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('transactions') }}">Transactions</a></li>
         <li class="nav-item"><a class="nav-link" href="{{ url_for('reports') }}">Reports</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('budgets') }}">Budgets</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('settings') }}">Settings</a></li>
         <li class="nav-item"><a class="nav-link" href="{{ url_for('about') }}">About</a></li>
+        <li class="nav-item ms-lg-3"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
       </ul>
     </div>
   </div>
 </nav>
 
-<div class="container-fluid">
+<div class="container">
     <!-- FLASH MESSAGES -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
@@ -51,126 +56,141 @@
       {% endif %}
     {% endwith %}
 
-    <!-- add-expense form centered -->
-    <div class="row justify-content-center mb-5">
-      <div class="col-lg-6">
-        <div class="card bg-secondary text-light shadow-lg mb-4">
-            <div class="card-body p-4">
-                <div class="text-center mb-4">
-                    <i class="fas fa-wallet" style="font-size: 3rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
-                    <h5 class="card-title mt-3">{{ 'Edit Expense' if edit_expense else 'Add New Expense' }}</h5>
-                </div>
-                <form id="expenseForm" method="POST" action="{{ url_for('add_expense') }}" class="expense-form">
-
-                  <input type="hidden" id="expenseId" name="id" value="{{ edit_expense.id if edit_expense else '' }}">
-
-                  <div class="row g-3 align-items-end">
-                    <div class="col-md-4">
-                      <label for="date" class="form-label small"><i class="fas fa-calendar-alt me-2"></i>Date</label>
-                      <div class="input-with-icon">
-                        <span class="input-icon"><i class="fas fa-calendar-alt"></i></span>
-                        <input type="date" class="form-control form-control-lg" id="date" name="date" required value="{{ edit_expense.date if edit_expense else '' }}">
-                      </div>
-                    </div>
-                    <div class="col-md-4">
-                      <label for="category" class="form-label small"><i class="fas fa-tag me-2"></i>Category</label>
-                      <div class="input-with-icon">
-                        <span class="input-icon"><i class="fas fa-tag"></i></span>
-                        <select class="form-select form-select-lg" id="category" name="category" required>
-                          <option value="">Choose category...</option>
-                          <option value="Food" {{ 'selected' if edit_expense and edit_expense.category=='Food' else '' }}>🍔 Food</option>
-                          <option value="Transport" {{ 'selected' if edit_expense and edit_expense.category=='Transport' else '' }}>🚗 Transport</option>
-                          <option value="Shopping" {{ 'selected' if edit_expense and edit_expense.category=='Shopping' else '' }}>🛍️ Shopping</option>
-                          <option value="Utilities" {{ 'selected' if edit_expense and edit_expense.category=='Utilities' else '' }}>⚡ Utilities</option>
-                          <option value="Other" {{ 'selected' if edit_expense and edit_expense.category=='Other' else '' }}>📦 Other</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div class="col-md-4">
-                      <label for="amount" class="form-label small"><i class="fas fa-rupee-sign me-2"></i>Amount</label>
-                      <div class="input-with-icon">
-                        <span class="input-icon"><i class="fas fa-rupee-sign"></i></span>
-                        <input type="number" step="0.01" class="form-control form-control-lg text-end" id="amount" name="amount" placeholder="0.00" required value="{{ edit_expense.amount if edit_expense else '' }}">
-                      </div>
-                    </div>
-
-                    <div class="col-12">
-                      <label for="name" class="form-label small"><i class="fas fa-pencil-alt me-2"></i>Description</label>
-                      <input type="text" class="form-control form-control-lg" id="name" name="name" placeholder="Enter expense description" required value="{{ edit_expense.name if edit_expense else '' }}">
-                    </div>
-
-                    <div class="col-12">
-                      <label for="notes" class="form-label small"><i class="fas fa-sticky-note me-2"></i>Notes</label>
-                      <textarea class="form-control" id="notes" name="notes" rows="2" placeholder="Optional details...">{{ edit_expense.notes if edit_expense else '' }}</textarea>
-                    </div>
-
-                    <div class="col-12 text-center">
-                      <button type="submit" id="submitBtn" class="btn btn-accent btn-lg me-2">
-                        <i class="fas fa-plus me-2"></i> {{ 'Update' if edit_expense else 'Add Expense' }}
-                      </button>
-                      <button type="button" id="cancelEdit" class="btn btn-outline-light btn-lg {{ '' if edit_expense else 'd-none' }}">
-                        <i class="fas fa-times me-2"></i> Cancel
-                      </button>
-                    </div>
-                  </div>
-                </form>
+    <!-- dashboard top: clean quick add -->
+    <div class="row dashboard-top g-4 mb-4">
+      <div class="col-12">
+        <div class="card dashboard-form-card text-light shadow-lg mb-4">
+          <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <h5 class="card-title mb-1">{{ 'Edit expense' if edit_expense else 'Quick add expense' }}</h5>
+                <p class="text-muted small mb-0">Log a new transaction in a clean, focused panel.</p>
+              </div>
+              <div class="d-none d-md-flex align-items-center">
+                <i class="fas fa-wallet" style="font-size: 2.4rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+              </div>
             </div>
-        </div>
+            <form id="expenseForm" method="POST" action="{{ url_for('add_expense') }}" class="expense-form">
+              <input type="hidden" id="expenseId" name="id" value="{{ edit_expense.id if edit_expense else '' }}">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="date" class="form-label small text-uppercase"><i class="fas fa-calendar-alt me-2"></i>Date</label>
+                  <div class="input-with-icon">
+                    <span class="input-icon"><i class="fas fa-calendar-alt"></i></span>
+                    <input type="date" class="form-control form-control-lg" id="date" name="date" required value="{{ edit_expense.date if edit_expense else '' }}">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label for="category" class="form-label small text-uppercase"><i class="fas fa-tag me-2"></i>Category</label>
+                  <div class="input-with-icon">
+                    <span class="input-icon"><i class="fas fa-tag"></i></span>
+                    <select class="form-select form-select-lg" id="category" name="category" required>
+                      <option value="">Choose category...</option>
+                      <option value="Food" {{ 'selected' if edit_expense and edit_expense.category=='Food' else '' }}>🍔 Food</option>
+                      <option value="Transport" {{ 'selected' if edit_expense and edit_expense.category=='Transport' else '' }}>🚗 Transport</option>
+                      <option value="Shopping" {{ 'selected' if edit_expense and edit_expense.category=='Shopping' else '' }}>🛍️ Shopping</option>
+                      <option value="Utilities" {{ 'selected' if edit_expense and edit_expense.category=='Utilities' else '' }}>⚡ Utilities</option>
+                      <option value="Other" {{ 'selected' if edit_expense and edit_expense.category=='Other' else '' }}>📦 Other</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label for="amount" class="form-label small text-uppercase"><i class="fas fa-rupee-sign me-2"></i>Amount</label>
+                  <div class="input-with-icon">
+                    <span class="input-icon"><i class="fas fa-rupee-sign"></i></span>
+                    <input type="number" step="0.01" class="form-control form-control-lg text-end" id="amount" name="amount" placeholder="0.00" required value="{{ edit_expense.amount if edit_expense else '' }}">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label for="name" class="form-label small text-uppercase"><i class="fas fa-pencil-alt me-2"></i>Description</label>
+                  <input type="text" class="form-control form-control-lg" id="name" name="name" placeholder="Enter expense description" required value="{{ edit_expense.name if edit_expense else '' }}">
+                </div>
+                <div class="col-12">
+                  <label for="notes" class="form-label small text-uppercase"><i class="fas fa-sticky-note me-2"></i>Notes</label>
+                  <textarea class="form-control" id="notes" name="notes" rows="2" placeholder="Optional details...">{{ edit_expense.notes if edit_expense else '' }}</textarea>
+                </div>
+                <div class="col-12 d-flex justify-content-end gap-2 mt-2">
+                  <button type="button" id="cancelEdit" class="btn btn-outline-light btn-lg {{ '' if edit_expense else 'd-none' }}">
+                    <i class="fas fa-times me-2"></i>Cancel
+                  </button>
+                  <button type="submit" id="submitBtn" class="btn btn-accent btn-lg">
+                    <i class="fas fa-plus me-2"></i>{{ 'Update expense' if edit_expense else 'Add expense' }}
+                  </button>
+                </div>
+              </div>
+            </form>
       </div>
     </div>
-    <!-- filters and stats below form -->
-    <div class="row mb-5">
+    <!-- filters, search & compact stats below form -->
+    <div class="row mb-4">
       <div class="col-lg-12">
-        <div class="card bg-dark text-light p-4">
-          <h5 class="mb-4"><i class="fas fa-sliders-h me-2"></i>Filters & Analytics</h5>
-          <div class="row g-3 mb-4">
-            <div class="col-md-4">
+        <div class="card dashboard-filters-card text-light p-4">
+          <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-3">
+            <h5 class="mb-2 mb-md-0"><i class="fas fa-sliders-h me-2"></i>Filters & Analytics</h5>
+            <div class="live-indicator text-muted small">
+              <span class="live-dot me-2"></span>
+              <span>Live · Last updated <span id="lastUpdated">just now</span></span>
+            </div>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-md-3">
                 <label class="form-label small"><i class="fas fa-calendar me-2"></i>From Date</label>
                 <input type="date" id="filterStart" class="form-control">
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <label class="form-label small"><i class="fas fa-calendar me-2"></i>To Date</label>
                 <input type="date" id="filterEnd" class="form-control">
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <label class="form-label small"><i class="fas fa-filter me-2"></i>Category</label>
                 <select id="filterCategory" class="form-select">
                     <option value="">All Categories</option>
-                    <option>Food</option>
-                    <option>Transport</option>
-                    <option>Shopping</option>
-                    <option>Utilities</option>
-                    <option>Other</option>
+                    <option value="Food">Food</option>
+                    <option value="Transport">Transport</option>
+                    <option value="Shopping">Shopping</option>
+                    <option value="Utilities">Utilities</option>
+                    <option value="Other">Other</option>
                 </select>
             </div>
+            <div class="col-md-3">
+              <label class="form-label small"><i class="fas fa-search me-2"></i>Search</label>
+              <input type="text" id="searchText" class="form-control" placeholder="Search description or notes">
+            </div>
           </div>
-          <div class="mb-4 text-end">
-            <button id="exportCsv" class="btn btn-outline-light"><i class="fa fa-file-csv me-2"></i>Export to CSV</button>
+          <div class="row g-2 mb-4 quick-filters">
+            <div class="col-12 col-md-8 d-flex flex-wrap gap-2">
+              <button type="button" class="btn btn-outline-light btn-sm quick-filter-btn" data-range="today">Today</button>
+              <button type="button" class="btn btn-outline-light btn-sm quick-filter-btn" data-range="week">This Week</button>
+              <button type="button" class="btn btn-outline-light btn-sm quick-filter-btn" data-range="month">This Month</button>
+              <button type="button" class="btn btn-outline-light btn-sm quick-filter-btn" data-range="all">Clear Range</button>
+            </div>
+            <div class="col-12 col-md-4 text-md-end">
+              <button id="exportCsv" class="btn btn-outline-light"><i class="fa fa-file-csv me-2"></i>Export to CSV</button>
+            </div>
           </div>
-          <!-- statistic cards -->
-          <div class="row g-3">
-            <div class="col-sm-6 col-lg-3">
-              <div class="stat-card">
-                <div class="stat-label"><i class="fas fa-list-ol me-2"></i>Total Expenses</div>
-                <div class="stat-value" id="statCount">0</div>
+          <div class="row g-3 small-dashboard-stats mt-1">
+            <div class="col-6 col-md-3">
+              <div class="stat-chip">
+                <span class="stat-chip-label">Expenses</span>
+                <span class="stat-chip-value" id="statCount">0</span>
               </div>
             </div>
-            <div class="col-sm-6 col-lg-3">
-              <div class="stat-card">
-                <div class="stat-label"><i class="fas fa-chart-line me-2"></i>Average</div>
-                <div class="stat-value" id="statAvg">₹0</div>
+            <div class="col-6 col-md-3">
+              <div class="stat-chip">
+                <span class="stat-chip-label">Total</span>
+                <span class="stat-chip-value" id="totalBadge">₹0</span>
               </div>
             </div>
-            <div class="col-sm-6 col-lg-3">
-              <div class="stat-card">
-                <div class="stat-label"><i class="fas fa-fire me-2"></i>Highest</div>
-                <div class="stat-value" id="statMax">₹0</div>
+            <div class="col-6 col-md-3">
+              <div class="stat-chip">
+                <span class="stat-chip-label">Average</span>
+                <span class="stat-chip-value" id="statAvg">₹0</span>
               </div>
             </div>
-            <div class="col-sm-6 col-lg-3">
-              <div class="stat-card">
-                <div class="stat-label"><i class="fas fa-arrow-down me-2"></i>Lowest</div>
-                <div class="stat-value" id="statMin">₹0</div>
+            <div class="col-6 col-md-3">
+              <div class="stat-chip">
+                <span class="stat-chip-label">Range</span>
+                <span class="stat-chip-value"><span id="statMin">₹0</span> – <span id="statMax">₹0</span></span>
               </div>
             </div>
           </div>
@@ -182,7 +202,12 @@
 
     <!-- empty message / table wrapper (always present) -->
     <div id="emptyMessage" class="card text-center p-5 {% if expenses %}d-none{% endif %}">
-        <i class="fas fa-inbox" style="font-size: 4rem; opacity: 0.5;"></i>
+        <img
+          src="https://images.pexels.com/photos/8296987/pexels-photo-8296987.jpeg?auto=compress&cs=tinysrgb&w=800"
+          alt="Minimal desk with notebook representing planning expenses"
+          class="dashboard-illustration mb-3"
+        />
+        <i class="fas fa-inbox" style="font-size: 3rem; opacity: 0.5;"></i>
         <p class="text-muted mt-3 fs-5">No expense entries yet.</p>
         <p class="text-muted small">Use the form above to log your first transaction.</p>
     </div>
@@ -200,7 +225,7 @@
         </thead>
         <tbody>
           {% for e in expenses %}
-          <tr data-id="{{ e.id }}" data-notes="{{ e.notes|e if e.notes else '' }}">
+          <tr data-id="{{ e.id }}" data-category="{{ e.category }}" data-notes="{{ e.notes|e if e.notes else '' }}">
             <td class="exp-date">{{ e.date }}</td>
             <td class="exp-cat">
               {% if e.category == 'Food' %}
@@ -238,13 +263,13 @@
             <div class="col-md-6">
                 <div class="stat-card">
                     <div class="stat-label"><i class="fas fa-wallet me-2"></i>Total Expenditure</div>
-                    <div class="stat-value" style="font-size: 2rem;">₹{{ total }}</div>
+                    <div class="stat-value" id="totalBadgeFooter" style="font-size: 2rem;">₹{{ total }}</div>
                 </div>
             </div>
             <div class="col-md-6">
                 <div class="stat-card">
                     <div class="stat-label"><i class="fas fa-list-ol me-2"></i>Entries Count</div>
-                    <div class="stat-value" style="font-size: 2rem;">{{ expenses|length }}</div>
+                    <div class="stat-value" id="countBadge" style="font-size: 2rem;">{{ expenses|length }}</div>
                 </div>
             </div>
         </div>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Welcome - Daily Expense Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-pchxda5jLzQ6PqfQh2JgRFS2GQG6q0ivIXv1PR+lTm2TXzr+fo1M5d9p8q5Yq6T0LmKdivo9egD1ypA8+2DzNQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="text-light" style="font-family: 'Inter', sans-serif;">
+<nav class="navbar navbar-expand-lg navbar-dark mb-4">
+  <div class="container">
+    <a class="navbar-brand centered-brand" href="{{ url_for('home') }}">Expense Tracker</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu" aria-controls="navMenu" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link active" aria-current="page" href="{{ url_for('home') }}">Home</a></li>
+        {% if current_user %}
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
+        {% else %}
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('login') }}">Login</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('register') }}">Sign up</a></li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container mt-4">
+  <div class="row align-items-center mb-5 home-hero">
+    <div class="col-lg-7">
+      <h1 class="mb-3">See exactly where every rupee goes.</h1>
+      <p class="lead mb-4">
+        Daily Expense Tracker turns your day‑to‑day spending into a clear story – no spreadsheets, no guessing, just a
+        live, colorful picture of your money in one place.
+      </p>
+      <ul class="mb-4">
+        <li class="mb-1"><i class="fas fa-check text-success me-2"></i><strong>Capture every swipe in seconds</strong> from mobile or desktop.</li>
+        <li class="mb-1"><i class="fas fa-check text-success me-2"></i><strong>Instant, colorful charts</strong> by day, week, month, and category.</li>
+        <li class="mb-1"><i class="fas fa-check text-success me-2"></i><strong>Friendly monthly limits</strong> so you feel a soft warning before overspending, not after.</li>
+        <li class="mb-1"><i class="fas fa-check text-success me-2"></i><strong>Your own private space</strong> with login, password and admin control.</li>
+      </ul>
+      <div class="d-flex flex-wrap gap-2">
+        {% if current_user %}
+          <a href="{{ url_for('dashboard') }}" class="btn btn-accent btn-lg">
+            <i class="fas fa-arrow-right me-2"></i>Go to your dashboard
+          </a>
+        {% else %}
+          <a href="{{ url_for('register') }}" class="btn btn-accent btn-lg">
+            <i class="fas fa-user-plus me-2"></i>Start tracking now
+          </a>
+          <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg">
+            <i class="fas fa-sign-in-alt me-2"></i>Log in
+          </a>
+        {% endif %}
+      </div>
+    </div>
+    <div class="col-lg-5 mt-4 mt-lg-0">
+      <div class="card home-why-card">
+        <div class="card-body">
+          <img
+            src="https://www.pexels.com/photo/black-and-silver-calculator-beside-silver-coins-5466793/"
+            alt="Person reviewing colorful finance dashboard on laptop"
+            class="img-fluid mb-3 hero-illustration"
+          />
+          <h5 class="card-title mb-3"><i class="fas fa-question-circle me-2"></i>Why this app?</h5>
+          <p class="mb-2">
+            Most people don’t overspend because they are careless – they overspend because they can’t <strong>see</strong> the full
+            picture every day. This tracker makes that picture impossible to ignore.
+          </p>
+          <p class="mb-0">
+            In a few clicks you’ll know: <strong>“How much did I really spend on food this month?”</strong>,
+            <strong>“Where is my money silently leaking?”</strong> and <strong>“Am I actually safe to spend this weekend?”</strong>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-5">
+    <div class="col-md-4">
+      <div class="card h-100 home-feature-card">
+        <div class="card-body">
+          <h5 class="card-title mb-2"><i class="fas fa-bolt me-2"></i>Real-time overview</h5>
+          <p class="mb-0">Your dashboard lights up today’s spend, fresh transactions, and quick filters so you can spot trends in seconds, not weeks.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card h-100 home-feature-card">
+        <div class="card-body">
+          <h5 class="card-title mb-2"><i class="fas fa-chart-line me-2"></i>Smart reports</h5>
+          <p class="mb-0">Beautiful monthly charts and category breakdowns answer the big questions: what’s growing, what to cut, and where you’re winning.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card h-100 home-feature-card">
+        <div class="card-body">
+          <h5 class="card-title mb-2"><i class="fas fa-user-lock me-2"></i>Personal space</h5>
+          <p class="mb-0">Each user has a secure, personal workspace, with an admin view only for you to monitor usage, protect data, and build better habits over time.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="site-footer mt-5 pt-4 pb-4">
+  <div class="container">
+    <div class="row g-4 align-items-start">
+      <div class="col-md-4">
+        <h6 class="footer-title">Daily Expense Tracker</h6>
+        <p class="footer-text mb-2">
+          A focused place to watch your money with calm, clear visuals instead of noisy spreadsheets.
+        </p>
+        <p class="footer-text small mb-0">
+          Crafted with care by <strong>Jebin</strong>.
+        </p>
+      </div>
+      <div class="col-md-4">
+        <h6 class="footer-title">Explore</h6>
+        <ul class="footer-links">
+          <li><a href="{{ url_for('home') }}">Home</a></li>
+          <li><a href="{{ url_for('login') }}">Login</a></li>
+          <li><a href="{{ url_for('register') }}">Create account</a></li>
+          <li><a href="{{ url_for('about') }}">About this project</a></li>
+        </ul>
+      </div>
+      <div class="col-md-4">
+        <h6 class="footer-title">Stay in control</h6>
+        <p class="footer-text small mb-2">
+          Check in for one minute a day and let the app quietly track the rest. Tiny, consistent steps beat big, noisy plans.
+        </p>
+        <div class="footer-meta small">
+          <span>&copy; {{ 2026 }} Jebin. All rights reserved.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+</body>
+</html>
+

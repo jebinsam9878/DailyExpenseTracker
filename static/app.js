@@ -10,6 +10,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const filterEnd = document.getElementById('filterEnd');
     const filterCategory = document.getElementById('filterCategory');
     const exportCsvBtn = document.getElementById('exportCsv');
+    const searchText = document.getElementById('searchText');
+    const quickFilterButtons = document.querySelectorAll('.quick-filter-btn');
+    const lastUpdatedLabel = document.getElementById('lastUpdated');
     const noteModal = new bootstrap.Modal(document.getElementById('noteModal'));
     const modalNotesContent = document.getElementById('modalNotesContent');
 
@@ -30,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const id = row.dataset.id;
             const date = row.querySelector('.exp-date').textContent.trim();
             const name = row.querySelector('.exp-name').textContent.trim();
-            const cat = row.querySelector('.exp-cat') ? row.querySelector('.exp-cat').textContent.trim() : '';
+            const cat = row.dataset.category || '';
             const amountText = row.querySelector('.exp-amount').textContent.replace('₹', '').trim();
             const amount = parseFloat(amountText);
             const notes = row.dataset.notes || '';
@@ -38,6 +41,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+
+    function renderCategoryBadge(category) {
+        switch (category) {
+            case 'Food':
+                return '<span class="category-badge badge-food">🍔 Food</span>';
+            case 'Transport':
+                return '<span class="category-badge badge-transport">🚗 Transport</span>';
+            case 'Shopping':
+                return '<span class="category-badge badge-shopping">🛍️ Shopping</span>';
+            case 'Utilities':
+                return '<span class="category-badge badge-utilities">⚡ Utilities</span>';
+            case 'Other':
+                return '<span class="category-badge badge-other">📦 Other</span>';
+            default:
+                return category || '';
+        }
+    }
 
     function renderTable(data = expenses) {
         const tbody = expensesTable.querySelector('tbody');
@@ -48,9 +68,9 @@ document.addEventListener('DOMContentLoaded', () => {
             tr.dataset.notes = e.notes || '';
             tr.innerHTML = `
                 <td class="exp-date">${formatDateString(e.date)}</td>
-                <td class="exp-cat">${e.category || ''}</td>
-                <td class="exp-name">${e.name}</td>
-                <td class="exp-amount fw-bold">₹${e.amount.toFixed(2)}</td>
+                <td class="exp-cat">${renderCategoryBadge(e.category)}</td>
+                <td class="exp-name"><strong>${e.name}</strong></td>
+                <td class="exp-amount fw-bold text-end" style="color: #4facfe;">₹${e.amount.toFixed(2)}</td>
                 <td class="text-end">
                   <button class="btn btn-sm btn-outline-secondary me-1 edit-btn" title="Edit"><i class="fas fa-pen"></i></button>
                   <button class="btn btn-sm btn-outline-danger delete-btn" title="Delete"><i class="fas fa-trash"></i></button>
@@ -263,6 +283,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (filterCategory.value) {
             filtered = filtered.filter(e => e.category === filterCategory.value);
         }
+        const search = (searchText?.value || '').trim().toLowerCase();
+        if (search) {
+            filtered = filtered.filter(e =>
+                (e.name && e.name.toLowerCase().includes(search)) ||
+                (e.notes && e.notes.toLowerCase().includes(search))
+            );
+        }
         // perform DOM updates on next paint for smoother experience
         window.requestAnimationFrame(() => {
             renderTable(filtered);
@@ -274,10 +301,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateTotal(data = expenses) {
         const total = data.reduce((sum, e) => sum + e.amount, 0);
-        totalBadge.textContent = `₹${total.toFixed(2)}`;
+        if (totalBadge) {
+            totalBadge.textContent = `₹${total.toFixed(2)}`;
+        }
+        const totalFooter = document.getElementById('totalBadgeFooter');
+        if (totalFooter) {
+            totalFooter.textContent = `₹${total.toFixed(2)}`;
+        }
         const countBadge = document.getElementById('countBadge');
         if (countBadge) {
             countBadge.textContent = data.length;
+        }
+        const statCount = document.getElementById('statCount');
+        if (statCount) {
+            statCount.textContent = data.length;
         }
         // additional stats
         const amounts = data.map(e => e.amount);
@@ -327,6 +364,43 @@ document.addEventListener('DOMContentLoaded', () => {
     filterEnd.addEventListener('change', applyFilters);
     filterCategory.addEventListener('change', applyFilters);
     exportCsvBtn.addEventListener('click', exportCsv);
+    if (searchText) {
+        searchText.addEventListener('input', () => {
+            // debounce-like behaviour via rAF inside applyFilters
+            applyFilters();
+        });
+    }
+
+    function applyQuickRange(range) {
+        const today = new Date();
+        const toIso = d => d.toISOString().slice(0, 10);
+        if (range === 'all') {
+            filterStart.value = '';
+            filterEnd.value = '';
+        } else if (range === 'today') {
+            const iso = toIso(today);
+            filterStart.value = iso;
+            filterEnd.value = iso;
+        } else if (range === 'week') {
+            const start = new Date(today);
+            const day = start.getDay() || 7; // make Monday start if needed
+            start.setDate(start.getDate() - (day - 1));
+            filterStart.value = toIso(start);
+            filterEnd.value = toIso(today);
+        } else if (range === 'month') {
+            const start = new Date(today.getFullYear(), today.getMonth(), 1);
+            filterStart.value = toIso(start);
+            filterEnd.value = toIso(today);
+        }
+        applyFilters();
+    }
+
+    quickFilterButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const range = btn.dataset.range;
+            applyQuickRange(range);
+        });
+    });
 
     // auto-poll new data every 10 seconds
     let _lastFetchHash = '';
@@ -348,6 +422,10 @@ document.addEventListener('DOMContentLoaded', () => {
               data.forEach(e => byId.set(e.id, e));
               expenses = Array.from(byId.values()).sort((a,b)=>a.id - b.id);
               applyFilters();
+              if (lastUpdatedLabel) {
+                  const now = new Date();
+                  lastUpdatedLabel.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              }
           })
           .catch(err => console.error('fetchLatest error', err));
     }
